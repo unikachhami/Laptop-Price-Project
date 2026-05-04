@@ -1,0 +1,17 @@
+cmd: python src/model/feature_preprocessing.py
+deps:
+- path: data/raw
+  hash: md5
+  md5: 2d7d78ecca743b92eece67f5e8e1d427.dir
+  size: 174412
+  nfiles: 2
+- path: src/model/feature_preprocessing.py
+  hash: md5
+  md5: 6a909887c7d86ffd06d1e7f8e3a9a273
+  size: 5284
+outs:
+- path: data/interim
+  hash: md5
+  md5: d5c39b86317e36caad607ab04fd92264.dir
+  size: 119820
+  nfiles: 2

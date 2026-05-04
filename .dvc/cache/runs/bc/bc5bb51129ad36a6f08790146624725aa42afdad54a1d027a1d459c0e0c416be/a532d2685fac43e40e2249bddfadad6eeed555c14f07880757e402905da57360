@@ -1,0 +1,16 @@
+cmd: python src/model/pipeline_building.py
+deps:
+- path: data/interim
+  hash: md5
+  md5: d5c39b86317e36caad607ab04fd92264.dir
+  size: 119820
+  nfiles: 2
+- path: src/model/pipeline_building.py
+  hash: md5
+  md5: cf8ef10f2002c91507d2595e3b8e8c93
+  size: 3980
+outs:
+- path: models/pipeline.pkl
+  hash: md5
+  md5: 7c47961af2e4af9f0d19297995c06d40
+  size: 6018289
