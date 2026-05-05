@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Laptop Price Predictor</title>
+
+    <style>
+        body {
+            font-family: Arial;
+            background: #0f172a;
+            color: white;
+        }
+
+        .box {
+            width: 520px;
+            margin: auto;
+            background: #1e293b;
+            padding: 20px;
+            margin-top: 40px;
+            border-radius: 10px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #38bdf8;
+        }
+
+        label {
+            display: block;
+            margin-top: 10px;
+        }
+
+        select, input {
+            width: 100%;
+            padding: 8px;
+            margin-top: 5px;
+            border-radius: 5px;
+            border: none;
+        }
+
+        button {
+            margin-top: 20px;
+            width: 100%;
+            padding: 10px;
+            background: #38bdf8;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .result {
+            margin-top: 20px;
+            padding: 10px;
+            background: #10b981;
+            text-align: center;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="box">
+
+    <h1>💻 Laptop Price Predictor</h1>
+
+    <form action="/predict" method="post">
+
+        <!-- Company -->
+        <label>Company</label>
+        <select name="company">
+            <option>Dell</option>
+            <option>HP</option>
+            <option>Lenovo</option>
+            <option>Asus</option>
+            <option>Acer</option>
+            <option>Apple</option>
+            <option>MSI</option>
+        </select>
+
+        <!-- Type -->
+        <label>Type Name</label>
+        <select name="type">
+            <option>Notebook</option>
+            <option>Gaming</option>
+            <option>Ultrabook</option>
+            <option>2 in 1 Convertible</option>
+        </select>
+
+        <!-- RAM -->
+        <label>RAM (GB)</label>
+        <select name="ram">
+            <option>4</option>
+            <option>8</option>
+            <option>16</option>
+            <option>32</option>
+        </select>
+
+        <!-- Weight -->
+        <label>Weight (kg)</label>
+        <input type="number" step="0.1" name="weight" value="2">
+
+        <!-- Touchscreen -->
+        <label>Touchscreen</label>
+        <select name="touchscreen">
+            <option>No</option>
+            <option>Yes</option>
+        </select>
+
+        <!-- IPS -->
+        <label>IPS Display</label>
+        <select name="ips">
+            <option>No</option>
+            <option>Yes</option>
+        </select>
+
+        <!-- Screen Size -->
+        <label>Screen Size (inch)</label>
+        <input type="number" step="0.1" name="screen_size" value="15.6">
+
+        <!-- Resolution -->
+        <label>Resolution</label>
+        <select name="resolution">
+            <option>1920x1080</option>
+            <option>1366x768</option>
+            <option>1600x900</option>
+            <option>3840x2160</option>
+        </select>
+
+        <!-- CPU BRAND (IMPORTANT FIX) -->
+        <label>CPU Brand</label>
+        <select name="cpu">
+            <option>Intel Core i3</option>
+            <option>Intel Core i5</option>
+            <option>Intel Core i7</option>
+            <option>AMD Ryzen 5</option>
+            <option>AMD Ryzen 7</option>
+        </select>
+
+        <!-- GPU BRAND (IMPORTANT FIX) -->
+        <label>GPU Brand</label>
+        <select name="gpu">
+            <option>Intel</option>
+            <option>Nvidia</option>
+            <option>AMD</option>
+        </select>
+
+        <!-- OS -->
+        <label>Operating System</label>
+        <select name="os">
+            <option>Windows</option>
+            <option>Mac</option>
+            <option>Linux</option>
+        </select>
+
+        <!-- STORAGE -->
+        <label>HDD (GB)</label>
+        <select name="hdd">
+            <option>0</option>
+            <option>256</option>
+            <option>512</option>
+            <option>1024</option>
+        </select>
+
+        <label>SSD (GB)</label>
+        <select name="ssd">
+            <option>0</option>
+            <option>128</option>
+            <option>256</option>
+            <option>512</option>
+            <option>1024</option>
+        </select>
+
+        <button type="submit">Predict Price 🚀</button>
+
+    </form>
+
+    {% if result %}
+    <div class="result">
+        💰 Predicted Price: {{ result }}
+    </div>
+    {% endif %}
+
+</div>
+
+</body>
+</html>
