@@ -31,7 +31,7 @@ repo_owner = 'unikbahadur1852'
 repo_name = 'Laptop-Price-Project'
 
 
-mlflow.set_tracking_uri(f'{dagshub_url}/{repo_owner}/{repo_name}')
+mlflow.set_tracking_uri(f'{dagshub_url}/{repo_owner}/{repo_name}.mlflow')
 
 
 def load_data(data_path):
