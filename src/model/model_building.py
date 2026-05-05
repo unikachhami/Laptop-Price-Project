@@ -19,7 +19,12 @@ import pickle
 import dagshub
 
 mlflow.set_tracking_uri('https://dagshub.com/unikbahadur1852/Laptop-Price-Project.mlflow')
-dagshub.init(repo_owner='unikbahadur1852', repo_name='Laptop-Price-Project', mlflow=True)
+dagshub.init(
+    repo_owner='unikbahadur1852',
+    repo_name='Laptop-Price-Project',
+    mlflow=True,
+    token=os.getenv("LAPTOP_TEST")
+)
 
 
 
