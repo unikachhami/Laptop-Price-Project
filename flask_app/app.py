@@ -2,6 +2,7 @@ from flask import Flask, render_template, request
 import numpy as np
 import pandas as pd
 import mlflow
+import os
 
 # -----------------------------
 # FLASK APP
@@ -11,9 +12,19 @@ app = Flask(__name__)
 # -----------------------------
 # MLflow setup
 # -----------------------------
-mlflow.set_tracking_uri(
-    "https://dagshub.com/unikbahadur1852/Laptop-Price-Project.mlflow"
-)
+dagshub_token = os.getenv("DAGSHUB_TOKEN")
+if not dagshub_token:
+    raise EnvironmentError("Environment variable is not set:")
+
+os.environ["MLFLOW_TRACKING_USERNAME"]= dagshub_token
+os.environ["MLFLOW_TRACKING_PASSWORD"] = dagshub_token
+
+dagshub_url = 'https:/dagshub.com'
+repo_owner = 'unikbahadur1852'
+repo_name = 'Laptop-Price-Project'
+
+
+mlflow.set_tracking_uri(f'{dagshub_url}/{repo_owner}/{repo_name}')
 
 MODEL_NAME = "lpmodel"
 
