@@ -19,11 +19,14 @@ import pickle
 import dagshub
 import os
 
-os.environ["DAGSHUB_TOKEN"] = os.getenv("DAGSHUB_TOKEN")
+# Ensure token exists (CI-safe)
+if os.getenv("DAGSHUB_TOKEN") is None:
+    raise ValueError("DAGSHUB_TOKEN missing")
 
-mlflow.set_tracking_uri('https://dagshub.com/unikbahadur1852/Laptop-Price-Project.mlflow')
-dagshub.init(repo_owner='unikbahadur1852', repo_name='Laptop-Price-Project', mlflow=True)
 
+mlflow.set_tracking_uri(
+    "https://dagshub.com/unikbahadur1852/Laptop-Price-Project.mlflow"
+)
 
 
 def load_data(data_path):
