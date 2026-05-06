@@ -5,9 +5,7 @@ from mlflow.tracking import MlflowClient
 
 def promote_model():
 
-    # -----------------------------
-    # Auth setup
-    # -----------------------------
+   
     dagshub_token = os.getenv("DAGSHUB_TOKEN")
     if not dagshub_token:
         raise EnvironmentError("DAGSHUB_TOKEN not set")
@@ -20,11 +18,9 @@ def promote_model():
     )
 
     client = MlflowClient()
-    model_name = "plmodel"   # ✅ SAME everywhere
+    model_name = "plmodel"   
 
-    # -----------------------------
-    # 1. Get current Production
-    # -----------------------------
+    
     try:
         prod_version = client.get_model_version_by_alias(
             model_name, "Production"
@@ -32,9 +28,7 @@ def promote_model():
     except:
         prod_version = None
 
-    # -----------------------------
-    # 2. Get current Staging (new model)
-    # -----------------------------
+  
     try:
         staging_version = client.get_model_version_by_alias(
             model_name, "Staging"
@@ -42,9 +36,7 @@ def promote_model():
     except:
         raise ValueError("No model in Staging. Train first.")
 
-    # -----------------------------
-    # 3. Move Production → Staging
-    # -----------------------------
+ 
     if prod_version:
         client.set_registered_model_alias(
             name=model_name,
@@ -53,9 +45,7 @@ def promote_model():
         )
         print(f"Production v{prod_version} → Staging")
 
-    # -----------------------------
-    # 4. Promote Staging → Production
-    # -----------------------------
+ 
     client.set_registered_model_alias(
         name=model_name,
         alias="Production",
@@ -63,7 +53,7 @@ def promote_model():
     )
 
     print(f"Staging v{staging_version} → Production")
-    print("🔥 Promotion complete")
+    print(" Promotion complete")
 
 
 if __name__ == "__main__":
