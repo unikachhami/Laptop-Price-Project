@@ -20,42 +20,47 @@ def promote_model():
     model_name = "plmodel"
 
     # -----------------------------
-    # Get current production model
+    # 1. get latest version (NEW MODEL)
+    # -----------------------------
+    latest_versions = client.search_model_versions(
+        f"name='{model_name}'"
+    )
+
+    new_model_version = max(
+        latest_versions,
+        key=lambda x: int(x.version)
+    ).version
+
+    # -----------------------------
+    # 2. get current production
     # -----------------------------
     try:
-        prod_model = client.get_model_version_by_alias(
-            model_name,
-            "Production"
-        )
+        prod = client.get_model_version_by_alias(
+            model_name, "Production"
+        ).version
+    except:
+        prod = None
 
-        # move old production → staging
+    # -----------------------------
+    # 3. move current prod → staging
+    # -----------------------------
+    if prod:
         client.set_registered_model_alias(
             name=model_name,
             alias="Staging",
-            version=prod_model.version
+            version=prod
         )
 
-    except Exception:
-        # no production model yet
-        pass
-
     # -----------------------------
-    # Get latest staging model
+    # 4. promote NEW → production
     # -----------------------------
-    staging_model = client.get_model_version_by_alias(
-        model_name,
-        "Staging"
-    )
-
-    # promote staging → production
     client.set_registered_model_alias(
         name=model_name,
         alias="Production",
-        version=staging_model.version
+        version=new_model_version
     )
 
-    print(f"Promoted version {staging_model.version} → Production")
-
+    print(f" Version {new_model_version} promoted to Production")
 
 if __name__ == "__main__":
     promote_model()
