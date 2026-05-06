@@ -6,7 +6,7 @@ def promote_model():
 
     dagshub_token = os.getenv("DAGSHUB_TOKEN")
     if not dagshub_token:
-        raise EnvironmentError("Dagshub Token environment variable is not set")
+        raise EnvironmentError("Dagshub Token not set")
 
     os.environ["MLFLOW_TRACKING_USERNAME"] = dagshub_token
     os.environ["MLFLOW_TRACKING_PASSWORD"] = dagshub_token
@@ -19,33 +19,14 @@ def promote_model():
     model_name = "my_model"
 
     # -----------------------------
-    # 1. Get current Production alias
+    # 1. Get staging (latest trained model)
     # -----------------------------
-    try:
-        prod_version = client.get_model_version_by_alias(model_name, "Production").version
-    except:
-        prod_version = None
+    staging_version = client.get_model_version_by_alias(
+        model_name, "Staging"
+    ).version
 
     # -----------------------------
-    # 2. Get Staging alias
-    # -----------------------------
-    try:
-        staging_version = client.get_model_version_by_alias(model_name, "Staging").version
-    except:
-        raise ValueError("No Staging model found")
-
-    # -----------------------------
-    # 3. Move Production → Staging
-    # -----------------------------
-    if prod_version:
-        client.set_registered_model_alias(
-            name=model_name,
-            alias="Staging",
-            version=prod_version
-        )
-
-    # -----------------------------
-    # 4. Promote Staging → Production
+    # 2. Promote staging → production
     # -----------------------------
     client.set_registered_model_alias(
         name=model_name,
@@ -54,7 +35,7 @@ def promote_model():
     )
 
     print(f"Staging v{staging_version} → Production")
-    print("Promotion complete 🚀")
+    print("Promotion complete ")
 
 
 if __name__ == "__main__":
