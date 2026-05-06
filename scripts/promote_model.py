@@ -16,49 +16,59 @@ def promote_model():
     os.environ["MLFLOW_TRACKING_PASSWORD"] = token
 
     # -----------------------------
-    # MLflow tracking URI
+    # Tracking URI
     # -----------------------------
-    dagshub_url = "https://dagshub.com"
-    repo_owner = "unikbahadur1852"
-    repo_name = "Laptop-Price-Project"
-
     mlflow.set_tracking_uri(
-        f"{dagshub_url}/{repo_owner}/{repo_name}.mlflow"
+        "https://dagshub.com/unikbahadur1852/Laptop-Price-Project.mlflow"
     )
 
     client = MlflowClient()
-
     model_name = "plmodel"
 
     # -----------------------------
-    # Get staging model via alias
-    # -----------------------------
-    staging_version = client.get_model_version_by_alias(
-        model_name,
-        "Staging"
-    ).version
-
-    # -----------------------------
-    # Archive current production models
+    # Get staging version safely
     # -----------------------------
     try:
-        prod_model = client.get_model_version_by_alias(
+        staging_version = client.get_model_version_by_alias(
+            model_name,
+            "Staging"
+        ).version
+    except Exception:
+        raise Exception("No Staging model found. Cannot promote.")
+
+    # -----------------------------
+    # Archive current production (if exists)
+    # -----------------------------
+    try:
+        prod_version = client.get_model_version_by_alias(
             model_name,
             "Production"
-        )
+        ).version
 
+        # move old production to archived
         client.set_registered_model_alias(
             name=model_name,
             alias="Archived",
-            version=prod_model.version
+            version=prod_version
         )
 
     except Exception:
-        # no production model yet (first run)
+        # no production yet
         pass
 
     # -----------------------------
-    # Promote staging → production
+    # IMPORTANT FIX:
+    # Ensure Staging ≠ Production visually
+    # (optional cleanup step)
+    # -----------------------------
+    client.set_registered_model_alias(
+        name=model_name,
+        alias="Staging",
+        version=staging_version
+    )
+
+    # -----------------------------
+    # Promote to Production
     # -----------------------------
     client.set_registered_model_alias(
         name=model_name,
@@ -66,7 +76,7 @@ def promote_model():
         version=staging_version
     )
 
-    print(f" Model version {staging_version} promoted to Production")
+    print(f" Version {staging_version} promoted to Production")
 
 
 if __name__ == "__main__":

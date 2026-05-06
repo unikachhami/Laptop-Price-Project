@@ -169,7 +169,11 @@ def train_and_register():
             f"name='{model_name}'"
         )
 
-        latest_version = max(latest_versions, key=lambda x: int(x.version)).version
+        latest_version = sorted(
+            latest_versions,
+            key=lambda x: int(x.version)
+        )[-1].version
+
 
         client.set_registered_model_alias(
             name=model_name,
@@ -177,13 +181,11 @@ def train_and_register():
             version=latest_version
         )
 
-    
         client.set_registered_model_tag(
             name=model_name,
             key="project",
             value="laptop-price-prediction"
         )
-
         save_pipeline(pipeline,'./models/pipeline.pkl')
         save_metrics(metrics,'./reports/metrics.json')
 
