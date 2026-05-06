@@ -16,17 +16,20 @@ def promote_model():
     )
 
     client = mlflow.MlflowClient()
-    model_name = "my_model"
+    model_name = "plmodel"   
 
     # -----------------------------
-    # 1. Get staging (latest trained model)
+    # Get Staging model
     # -----------------------------
-    staging_version = client.get_model_version_by_alias(
-        model_name, "Staging"
-    ).version
+    try:
+        staging_version = client.get_model_version_by_alias(
+            model_name, "Staging"
+        ).version
+    except:
+        raise ValueError("No Staging model found. Train first.")
 
     # -----------------------------
-    # 2. Promote staging → production
+    # Promote → Production
     # -----------------------------
     client.set_registered_model_alias(
         name=model_name,
