@@ -10,49 +10,62 @@ import os
 app = Flask(__name__)
 
 # -----------------------------
-# MLflow setup
+# MLflow setup (SAFE)
 # -----------------------------
 dagshub_token = os.getenv("DAGSHUB_TOKEN")
-if not dagshub_token:
-    raise EnvironmentError("Environment variable is not set:")
 
-os.environ["MLFLOW_TRACKING_USERNAME"]= dagshub_token
-os.environ["MLFLOW_TRACKING_PASSWORD"] = dagshub_token
+if dagshub_token:
+    os.environ["MLFLOW_TRACKING_USERNAME"] = dagshub_token
+    os.environ["MLFLOW_TRACKING_PASSWORD"] = dagshub_token
 
-dagshub_url = 'https:/dagshub.com'
-repo_owner = 'unikbahadur1852'
-repo_name = 'Laptop-Price-Project'
+repo_owner = "unikbahadur1852"
+repo_name = "Laptop-Price-Project"
 
 
-mlflow.set_tracking_uri(f'{dagshub_url}/{repo_owner}/{repo_name}')
+mlflow.set_tracking_uri(
+    f"https://dagshub.com/{repo_owner}/{repo_name}.mlflow"
+)
 
 MODEL_NAME = "lpmodel"
 
+# -----------------------------
+# Lazy model loader (IMPORTANT FIX)
+# -----------------------------
+model = None
 
-# -----------------------------
-# Load latest production model
-# -----------------------------
+
 def load_model():
-    client = mlflow.MlflowClient()
+    """
+    Loads latest model from MLflow registry safely.
+    Falls back gracefully if registry is unavailable.
+    """
+    try:
+        client = mlflow.MlflowClient()
 
-    # Try production first
-    versions = client.get_latest_versions(MODEL_NAME, stages=["Production"])
+        versions = client.get_latest_versions(MODEL_NAME, stages=["Production"])
 
-    if not versions:
-        versions = client.get_latest_versions(MODEL_NAME, stages=["Staging"])
+        if not versions:
+            versions = client.get_latest_versions(MODEL_NAME, stages=["Staging"])
 
-    if not versions:
-        versions = client.get_latest_versions(MODEL_NAME, stages=["None"])
+        if not versions:
+            versions = client.get_latest_versions(MODEL_NAME, stages=["None"])
 
-    version = versions[0].version
+        version = versions[0].version
+        model_uri = f"models:/{MODEL_NAME}/{version}"
 
-    model_uri = f"models:/{MODEL_NAME}/{version}"
-    print("🚀 Loading model:", model_uri)
+        print(f"🚀 Loading model: {model_uri}")
+        return mlflow.pyfunc.load_model(model_uri)
 
-    return mlflow.pyfunc.load_model(model_uri)
+    except Exception as e:
+        print("⚠️ Model loading failed:", str(e))
+        return None
 
 
-model = load_model()
+def get_model():
+    global model
+    if model is None:
+        model = load_model()
+    return model
 
 
 # -----------------------------
@@ -68,7 +81,6 @@ def home():
 # -----------------------------
 @app.route("/predict", methods=["POST"])
 def predict():
-
     try:
         # ---------------- INPUT ----------------
         company = request.form["company"]
@@ -83,8 +95,7 @@ def predict():
 
         resolution = request.form["resolution"]
         x_res, y_res = resolution.split("x")
-        x_res = int(x_res)
-        y_res = int(y_res)
+        x_res, y_res = int(x_res), int(y_res)
 
         hdd = int(request.form["hdd"])
         ssd = int(request.form["ssd"])
@@ -93,9 +104,8 @@ def predict():
         ips = 1 if request.form["ips"] == "Yes" else 0
 
         # ---------------- FEATURE ENGINEERING ----------------
-        ppi = ((x_res**2 + y_res**2) ** 0.5) / screen_size
+        ppi = ((x_res ** 2 + y_res ** 2) ** 0.5) / screen_size
 
-        # ---------------- BUILD INPUT DATAFRAME ----------------
         input_df = pd.DataFrame([{
             "Company": company,
             "TypeName": typename,
@@ -111,10 +121,13 @@ def predict():
             "SSD": ssd
         }])
 
-        # ---------------- PREDICTION (PIPELINE MAGIC) ----------------
-        pred = model.predict(input_df)[0]
+        # ---------------- MODEL ----------------
+        model = get_model()
 
-        # reverse log transform
+        if model is None:
+            return render_template("index.html", result="Model not available")
+
+        pred = model.predict(input_df)[0]
         pred = np.exp(pred)
 
         return render_template("index.html", result=int(pred))
