@@ -20,39 +20,45 @@ def promote_model():
     model_name = "plmodel"
 
     # -----------------------------
-    # 1. get latest version (NEW MODEL)
-    # -----------------------------
-    latest_versions = client.search_model_versions(
-        f"name='{model_name}'"
-    )
-
-    new_model_version = max(
-        latest_versions,
-        key=lambda x: int(x.version)
-    ).version
-
-    # -----------------------------
-    # 2. get current production
+    # 1. get current production version
     # -----------------------------
     try:
-        prod = client.get_model_version_by_alias(
+        prod_version = client.get_model_version_by_alias(
             model_name, "Production"
         ).version
     except:
-        prod = None
+        prod_version = None
 
     # -----------------------------
-    # 3. move current prod → staging
+    # 2. get all versions
     # -----------------------------
-    if prod:
+    all_versions = client.search_model_versions(f"name='{model_name}'")
+
+    # -----------------------------
+    # 3. pick latest NON-production version
+    # -----------------------------
+    candidates = [
+        v for v in all_versions
+        if v.version != prod_version
+    ]
+
+    if not candidates:
+        raise ValueError("No new model version available to promote.")
+
+    new_model_version = max(candidates, key=lambda x: int(x.version)).version
+
+    # -----------------------------
+    # 4. move current prod → staging
+    # -----------------------------
+    if prod_version:
         client.set_registered_model_alias(
             name=model_name,
             alias="Staging",
-            version=prod
+            version=prod_version
         )
 
     # -----------------------------
-    # 4. promote NEW → production
+    # 5. promote new → production
     # -----------------------------
     client.set_registered_model_alias(
         name=model_name,
@@ -60,7 +66,9 @@ def promote_model():
         version=new_model_version
     )
 
-    print(f" Version {new_model_version} promoted to Production")
+    print(f" Version {prod_version} → Staging")
+    print(f" Version {new_model_version} → Production")
+
 
 if __name__ == "__main__":
     promote_model()
