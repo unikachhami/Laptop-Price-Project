@@ -1,30 +1,73 @@
 import os
-import dagshub
 import mlflow
-def promotr_model():
-    dagshub_token = os.getenv("DAGSHUB_TOKEN")
-    if not dagshub_token:
-        raise EnvironmentError("Environment variable is not set:")
+from mlflow.tracking import MlflowClient
 
-    os.environ["MLFLOW_USERNAME"] = dagshub_token
-    os.environ["MLFLOW_PASSWORD"] = dagshub_token
 
+def promote_model():
+
+    # -----------------------------
+    # Auth
+    # -----------------------------
+    token = os.getenv("DAGSHUB_TOKEN")
+    if not token:
+        raise EnvironmentError("DAGSHUB_TOKEN environment variable is not set")
+
+    os.environ["MLFLOW_TRACKING_USERNAME"] = token
+    os.environ["MLFLOW_TRACKING_PASSWORD"] = token
+
+    # -----------------------------
+    # MLflow tracking URI
+    # -----------------------------
     dagshub_url = "https://dagshub.com"
     repo_owner = "unikbahadur1852"
     repo_name = "Laptop-Price-Project"
 
-    mlflow.set_tracking_uri(f"{dagshub_url}/{repo_owner}/{repo_name}")
+    mlflow.set_tracking_uri(
+        f"{dagshub_url}/{repo_owner}/{repo_name}.mlflow"
+    )
 
-    client = mlflow.MlflowClient()
+    client = MlflowClient()
 
-    my_model = 'pl_model'
+    model_name = "plmodel"
 
-    latest_version_staging = client.get_latest_versions(my_model,stages=['Staging'])[0]._version
+    # -----------------------------
+    # Get staging model via alias
+    # -----------------------------
+    staging_version = client.get_model_version_by_alias(
+        model_name,
+        "Staging"
+    ).version
 
-    prod_verion = client.get_latest_versions(my_model,stages=['Production'])
+    # -----------------------------
+    # Archive current production models
+    # -----------------------------
+    try:
+        prod_model = client.get_model_version_by_alias(
+            model_name,
+            "Production"
+        )
 
-    for version in prod_verion:
-        client.set_registered_model_alias(name=my_model,version=version.version,alias=['Archived'])
+        client.set_registered_model_alias(
+            name=model_name,
+            alias="Archived",
+            version=prod_model.version
+        )
 
-    client.set_registered_model_alias(my_model,version=latest_version_staging,alias=['Production'])
-    print(f"Model version {latest_version_staging} promoted to production")
+    except Exception:
+        # no production model yet (first run)
+        pass
+
+    # -----------------------------
+    # Promote staging → production
+    # -----------------------------
+    client.set_registered_model_alias(
+        name=model_name,
+        alias="Production",
+        version=staging_version
+    )
+
+    print(f" Model version {staging_version} promoted to Production")
+
+
+if __name__ == "__main__":
+    promote_model()

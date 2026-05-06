@@ -163,18 +163,18 @@ def train_and_register():
         client = MlflowClient()
 
     
-        latest_version_info = client.get_latest_versions(
-        name=model_name,
-        stages=["None"]
-        )[0]
+        client = MlflowClient()
 
-        latest_version = latest_version_info.version
+        latest_versions = client.search_model_versions(
+            f"name='{model_name}'"
+        )
 
-   
+        latest_version = max(latest_versions, key=lambda x: int(x.version)).version
+
         client.set_registered_model_alias(
-        name=model_name,
-        alias="Staging",
-        version=latest_version
+            name=model_name,
+            alias="Staging",
+            version=latest_version
         )
 
     
