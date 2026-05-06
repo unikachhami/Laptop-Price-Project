@@ -23,6 +23,8 @@ dagshub_token = os.getenv("DAGSHUB_TOKEN")
 if not dagshub_token:
     raise EnvironmentError("Environment variable is not set:")
 
+dagshub.auth.add_app_token(dagshub_token)
+
 os.environ["MLFLOW_TRACKING_USERNAME"]= dagshub_token
 os.environ["MLFLOW_TRACKING_PASSWORD"] = dagshub_token
 
