@@ -180,8 +180,8 @@ def train_and_register():
     
         client.set_registered_model_tag(
             name=model_name,
-            key="environment",
-            value="production"
+            key="project",
+            value="laptop-price-prediction"
         )
 
         save_pipeline(pipeline,'./models/pipeline.pkl')
