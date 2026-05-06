@@ -18,28 +18,26 @@ def promote_model():
     client = mlflow.MlflowClient()
     model_name = "plmodel"   
 
-    # -----------------------------
-    # Get Staging model
-    # -----------------------------
     try:
-        staging_version = client.get_model_version_by_alias(
-            model_name, "Staging"
-        ).version
-    except:
-        raise ValueError("No Staging model found. Train first.")
+        # 1. Get the current Staging version
+        staging_version_info = client.get_model_version_by_alias(model_name, "Staging")
+        v_num = staging_version_info.version
+    except Exception:
+        print("Error: No model found with 'Staging' alias. Run model_building.py first.")
+        return
 
-    # -----------------------------
-    # Promote → Production
-    # -----------------------------
+    # 2. Promote this version to Production
     client.set_registered_model_alias(
         name=model_name,
         alias="Production",
-        version=staging_version
+        version=v_num
     )
 
-    print(f"Staging v{staging_version} → Production")
-    print("Promotion complete ")
+    # 3. FIX: Remove the Staging alias from this version 
+    # This prevents Version 24 from having TWO aliases at once.
+    client.delete_registered_model_alias(model_name, "Staging")
 
+    print(f"Successfully promoted Version {v_num} to Production and cleared Staging.")
 
 if __name__ == "__main__":
     promote_model()
