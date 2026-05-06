@@ -3,9 +3,7 @@ import mlflow
 
 
 def promote_model():
-    # -----------------------------
-    # Auth setup
-    # -----------------------------
+
     dagshub_token = os.getenv("DAGSHUB_TOKEN")
     if not dagshub_token:
         raise EnvironmentError("Dagshub Token environment variable is not set")
@@ -13,54 +11,50 @@ def promote_model():
     os.environ["MLFLOW_TRACKING_USERNAME"] = dagshub_token
     os.environ["MLFLOW_TRACKING_PASSWORD"] = dagshub_token
 
-    dagshub_url = "https://dagshub.com"
-    repo_owner = "unikbahadur1852"
-    repo_name = "Laptop-Price-Project"
-
-    mlflow.set_tracking_uri(f"{dagshub_url}/{repo_owner}/{repo_name}.mlflow")
+    mlflow.set_tracking_uri(
+        "https://dagshub.com/unikbahadur1852/Laptop-Price-Project.mlflow"
+    )
 
     client = mlflow.MlflowClient()
     model_name = "my_model"
 
     # -----------------------------
-    # 1. Get current Production version
+    # 1. Get current Production alias
     # -----------------------------
-    prod_versions = client.get_latest_versions(model_name, stages=["Production"])
-
-    prod_version = prod_versions[0].version if prod_versions else None
-
-    # -----------------------------
-    # 2. Get latest Staging version safely
-    # -----------------------------
-    staging_versions = client.get_latest_versions(model_name, stages=["Staging"])
-
-    if not staging_versions:
-        raise ValueError("No model found in Staging to promote.")
-
-    staging_version = staging_versions[0].version
+    try:
+        prod_version = client.get_model_version_by_alias(model_name, "Production").version
+    except:
+        prod_version = None
 
     # -----------------------------
-    # 3. Move current Production → Staging (if exists)
+    # 2. Get Staging alias
+    # -----------------------------
+    try:
+        staging_version = client.get_model_version_by_alias(model_name, "Staging").version
+    except:
+        raise ValueError("No Staging model found")
+
+    # -----------------------------
+    # 3. Move Production → Staging
     # -----------------------------
     if prod_version:
-        client.transition_model_version_stage(
+        client.set_registered_model_alias(
             name=model_name,
-            version=prod_version,
-            stage="Staging"
+            alias="Staging",
+            version=prod_version
         )
-        print(f"Production v{prod_version} → Staging")
 
     # -----------------------------
     # 4. Promote Staging → Production
     # -----------------------------
-    client.transition_model_version_stage(
+    client.set_registered_model_alias(
         name=model_name,
-        version=staging_version,
-        stage="Production"
+        alias="Production",
+        version=staging_version
     )
 
     print(f"Staging v{staging_version} → Production")
-    print("Promotion complete ")
+    print("Promotion complete 🚀")
 
 
 if __name__ == "__main__":
