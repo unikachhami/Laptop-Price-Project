@@ -154,7 +154,7 @@ def train_and_register():
         
 
         # Log & register model
-        result = mlflow.sklearn.log_model(
+        mlflow.sklearn.log_model(
             sk_model=pipeline,
             artifact_path="model",
             registered_model_name="plmodel"   
@@ -162,18 +162,30 @@ def train_and_register():
 
         client = MlflowClient()
 
-        new_version = result.model_version
+    
+        client = MlflowClient()
 
-        # Clean up: If there was a previous "Staging" model, it gets replaced.
-        # We assign the NEW version to Staging.
+        latest_versions = client.search_model_versions(
+            f"name='{model_name}'"
+        )
+
+        latest_version = sorted(
+            latest_versions,
+            key=lambda x: int(x.version)
+        )[-1].version
+
+
         client.set_registered_model_alias(
             name=model_name,
             alias="Staging",
-            version=new_version
+            version=latest_version
         )
 
-    
-        
+        client.set_registered_model_tag(
+            name=model_name,
+            key="project",
+            value="laptop-price-prediction"
+)
         save_pipeline(pipeline,'./models/pipeline.pkl')
         save_metrics(metrics,'./reports/metrics.json')
 
