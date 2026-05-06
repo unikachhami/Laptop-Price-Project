@@ -1,6 +1,7 @@
 import json
 
 # from fastapi.routing import _endpoint_context_cache
+import dagshub.auth
 import pandas as pd
 import numpy as np
 import os
@@ -19,6 +20,9 @@ import pickle
 import dagshub
 import os
 
+# mlflow.set_tracking_uri('https://dagshub.com/unikbahadur1852/Laptop-Price-Project.mlflow')
+# dagshub.init(repo_owner='unikbahadur1852', repo_name='Laptop-Price-Project', mlflow=True)
+
 dagshub_token = os.getenv("DAGSHUB_TOKEN")
 if not dagshub_token:
     raise EnvironmentError("Environment variable is not set:")
@@ -33,8 +37,10 @@ repo_owner = 'unikbahadur1852'
 repo_name = 'Laptop-Price-Project'
 
 
+
 mlflow.set_tracking_uri(f'{dagshub_url}/{repo_owner}/{repo_name}.mlflow')
 dagshub.init(repo_owner=repo_owner, repo_name=repo_name, mlflow=True)
+
 
 
 def load_data(data_path):
