@@ -1,73 +1,66 @@
 import os
 import mlflow
-from mlflow.tracking import MlflowClient
 
 
 def promote_model():
+    # -----------------------------
+    # Auth setup
+    # -----------------------------
+    dagshub_token = os.getenv("CAPSTONE_TEST")
+    if not dagshub_token:
+        raise EnvironmentError("CAPSTONE_TEST environment variable is not set")
 
-    token = os.getenv("DAGSHUB_TOKEN")
-    if not token:
-        raise EnvironmentError("DAGSHUB_TOKEN not set")
+    os.environ["MLFLOW_TRACKING_USERNAME"] = dagshub_token
+    os.environ["MLFLOW_TRACKING_PASSWORD"] = dagshub_token
 
-    os.environ["MLFLOW_TRACKING_USERNAME"] = token
-    os.environ["MLFLOW_TRACKING_PASSWORD"] = token
+    dagshub_url = "https://dagshub.com"
+    repo_owner = "vikashdas770"
+    repo_name = "YT-Capstone-Project"
 
-    mlflow.set_tracking_uri(
-        "https://dagshub.com/unikbahadur1852/Laptop-Price-Project.mlflow"
-    )
+    mlflow.set_tracking_uri(f"{dagshub_url}/{repo_owner}/{repo_name}.mlflow")
 
-    client = MlflowClient()
-    model_name = "plmodel"
+    client = mlflow.MlflowClient()
+    model_name = "my_model"
 
     # -----------------------------
-    # 1. get current production version
+    # 1. Get current Production version
     # -----------------------------
-    try:
-        prod_version = client.get_model_version_by_alias(
-            model_name, "Production"
-        ).version
-    except:
-        prod_version = None
+    prod_versions = client.get_latest_versions(model_name, stages=["Production"])
+
+    prod_version = prod_versions[0].version if prod_versions else None
 
     # -----------------------------
-    # 2. get all versions
+    # 2. Get latest Staging version safely
     # -----------------------------
-    all_versions = client.search_model_versions(f"name='{model_name}'")
+    staging_versions = client.get_latest_versions(model_name, stages=["Staging"])
+
+    if not staging_versions:
+        raise ValueError("No model found in Staging to promote.")
+
+    staging_version = staging_versions[0].version
 
     # -----------------------------
-    # 3. pick latest NON-production version
-    # -----------------------------
-    candidates = [
-        v for v in all_versions
-        if v.version != prod_version
-    ]
-
-    if not candidates:
-        raise ValueError("No new model version available to promote.")
-
-    new_model_version = max(candidates, key=lambda x: int(x.version)).version
-
-    # -----------------------------
-    # 4. move current prod → staging
+    # 3. Move current Production → Staging (if exists)
     # -----------------------------
     if prod_version:
-        client.set_registered_model_alias(
+        client.transition_model_version_stage(
             name=model_name,
-            alias="Staging",
-            version=prod_version
+            version=prod_version,
+            stage="Staging"
         )
+        print(f"Production v{prod_version} → Staging")
 
     # -----------------------------
-    # 5. promote new → production
+    # 4. Promote Staging → Production
     # -----------------------------
-    client.set_registered_model_alias(
+    client.transition_model_version_stage(
         name=model_name,
-        alias="Production",
-        version=new_model_version
+        version=staging_version,
+        stage="Production"
     )
 
-    print(f" Version {prod_version} → Staging")
-    print(f" Version {new_model_version} → Production")
+    print(f"Staging v{staging_version} → Production")
+    print("Promotion complete 🚀")
 
 
 if __name__ == "__main__":
