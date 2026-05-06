@@ -14,8 +14,8 @@ def promote_model():
     os.environ["MLFLOW_TRACKING_PASSWORD"] = dagshub_token
 
     dagshub_url = "https://dagshub.com"
-    repo_owner = "vikashdas770"
-    repo_name = "YT-Capstone-Project"
+    repo_owner = "unikbahadur1852"
+    repo_name = "Laptop-Price-Project"
 
     mlflow.set_tracking_uri(f"{dagshub_url}/{repo_owner}/{repo_name}.mlflow")
 
@@ -60,7 +60,7 @@ def promote_model():
     )
 
     print(f"Staging v{staging_version} → Production")
-    print("Promotion complete 🚀")
+    print("Promotion complete ")
 
 
 if __name__ == "__main__":
